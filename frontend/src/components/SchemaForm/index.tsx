@@ -4,6 +4,7 @@ import axios from "axios";
 import { Button } from "@heroui/react";
 import { APIServer } from "@/libs/apiServer";
 import toast from "react-hot-toast";
+import postgresDataTypes from "@/libs/constants/postgresDataTypes";
 
 type Column = {
    name: string;
@@ -16,6 +17,27 @@ type Column = {
 const SchemaForm = () => {
    const [tableName, setTableName] = useState("");
    const [columns, setColumns] = useState<Column[]>([
+      {
+         isNotNull: false,
+         isPrimaryKey: true,
+         isUnique: true,
+         name: "id",
+         type: "UUID",
+      },
+      {
+         isNotNull: false,
+         isPrimaryKey: true,
+         isUnique: true,
+         name: "creadedAt",
+         type: "TIMESTAMP",
+      },
+      {
+         isNotNull: false,
+         isPrimaryKey: true,
+         isUnique: true,
+         name: "updatedAt",
+         type: "TIMESTAMP",
+      },
       {
          name: "",
          type: "VARCHAR",
@@ -71,8 +93,8 @@ const SchemaForm = () => {
    useEffect(() => {
       const test = async () => {
          try {
-            await axios.get(`${APIServer}/schema/`);
-            toast.success("Schema created successfully");
+            await axios.get(`${APIServer}/schema`);
+            // toast.success("Schema created successfully");
          } catch (error) {
             console.error(error);
             toast.error("Failed to create schema");
@@ -83,7 +105,7 @@ const SchemaForm = () => {
    }, []);
 
    return (
-      <div className="border border-neutral-300 px-3 py-6 max-w-[1000px] m-auto flex flex-col gap-y-3 my-6 rounded-lg">
+      <div className="border border-neutral-300 px-3 py-6 flex flex-col gap-y-3 rounded-lg w-fit">
          <h2 className="text-2xl font-semibold text-center mb-6">
             Create Table Schema
          </h2>
@@ -113,11 +135,11 @@ const SchemaForm = () => {
                   }
                   className="border border-neutral-300 rounded-md p-2"
                >
-                  <option value="VARCHAR">VARCHAR</option>
-                  <option value="INTEGER">INTEGER</option>
-                  <option value="BOOLEAN">BOOLEAN</option>
-                  <option value="TEXT">TEXT</option>
-                  <option value="UUID">UUID</option>
+                  {postgresDataTypes.map((item) => (
+                     <option value={item.value} key={item.value}>
+                        {item.label}
+                     </option>
+                  ))}
                </select>
 
                <div>
@@ -149,15 +171,21 @@ const SchemaForm = () => {
                </div>
 
                <div>
-                  <input
-                     type="checkbox"
-                     checked={col.isNotNull}
-                     onChange={(e) =>
-                        handleColumnChange(index, "isNotNull", e.target.checked)
-                     }
-                     aria-label="isNotNull"
-                  />{" "}
-                  <label htmlFor="isNotNull">Not Null</label>
+                  <div>
+                     <input
+                        type="checkbox"
+                        checked={col.isNotNull}
+                        onChange={(e) =>
+                           handleColumnChange(
+                              index,
+                              "isNotNull",
+                              e.target.checked
+                           )
+                        }
+                        aria-label="isNotNull"
+                     />{" "}
+                     <label htmlFor="isNotNull">Not Null</label>
+                  </div>
                </div>
             </div>
          ))}
