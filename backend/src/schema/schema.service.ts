@@ -1,34 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import { Schema } from './entities/schema.entity';
 import { CreateSchemaDto } from './dto/create-schema.dto';
 
 @Injectable()
 export class SchemaService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Schema)
+    private readonly schemaRepository: Repository<Schema>,
+  ) {}
 
-  async createTable(dto: CreateSchemaDto) {
-    try {
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
+  async create(createRoleDto: CreateSchemaDto): Promise<Schema> {
+    const schema = this.schemaRepository.create(createRoleDto);
+    return this.schemaRepository.save(schema);
+  }
 
-      const columnDefinitions = dto.columns
-        .map((col) => {
-          let definition = `${col.name} ${col.type}`;
-          if (col.isPrimaryKey) definition += ' PRIMARY KEY';
-          if (col.isUnique) definition += ' UNIQUE';
-          if (col.isNotNull) definition += ' NOT NULL';
-          return definition;
-        })
-        .join(', ');
+  async findOne(options: FindOneOptions<Schema>): Promise<Schema> {
+    return this.schemaRepository.findOne(options);
+  }
 
-      const query = `CREATE TABLE IF NOT EXISTS ${dto.tableName} (${columnDefinitions});`;
+  async find(options: FindManyOptions<Schema>): Promise<Schema[]> {
+    return this.schemaRepository.find(options);
+  }
 
-      await queryRunner.query(query);
-      await queryRunner.release();
+  // async insertMany(createRoleDto: CreateRoleDto[]): Promise<Schema[]> {
+  //   const role = this.schemaRepository.create(createRoleDto);
+  //   return await this.schemaRepository.save(role);
+  // }
 
-      return { message: `Table ${dto.tableName} created successfully.` };
-    } catch (error) {
-      return error;
-    }
+  // async findAll(): Promise<Schema[]> {
+  //   return await this.schemaRepository.find();
+  // }
+
+  // async findById(id: string): Promise<Schema | null> {
+  //   const role = await this.schemaRepository.findOne({ where: { id } });
+  //   return role;
+  // }
+
+  // async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Schema> {
+  //   const existingRole = await this.findById(id);
+  //   const updatedRole = {
+  //     ...existingRole,
+  //     ...updateRoleDto,
+  //   };
+  //   return await this.schemaRepository.save(updatedRole);
+  // }
+
+  async remove(id: string) {
+    return this.schemaRepository.delete({ id });
   }
 }

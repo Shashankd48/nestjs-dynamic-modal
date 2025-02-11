@@ -22,7 +22,7 @@ import { SchemaModule } from './schema/schema.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        synchronize: configService.get<boolean>('DB_SYNCHRONIZE') === true, // Convert string to boolean
+        synchronize: true,
         autoLoadEntities: true, // Automatically load entities
       }),
     }),

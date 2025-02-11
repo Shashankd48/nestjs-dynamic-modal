@@ -18,7 +18,7 @@ class ColumnDto {
   isNotNull: boolean;
 }
 
-export class CreateSchemaDto {
+export class CreateDynamicSchemaDto {
   @IsString()
   tableName: string;
 
@@ -26,4 +26,12 @@ export class CreateSchemaDto {
   @ValidateNested({ each: true })
   @Type(() => ColumnDto)
   columns: ColumnDto[];
+}
+
+export class CreateSchemaDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  metadata: string;
 }

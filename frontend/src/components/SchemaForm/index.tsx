@@ -26,15 +26,15 @@ const SchemaForm = () => {
       },
       {
          isNotNull: false,
-         isPrimaryKey: true,
-         isUnique: true,
-         name: "creadedAt",
+         isPrimaryKey: false,
+         isUnique: false,
+         name: "createdAt",
          type: "TIMESTAMP",
       },
       {
          isNotNull: false,
-         isPrimaryKey: true,
-         isUnique: true,
+         isPrimaryKey: false,
+         isUnique: false,
          name: "updatedAt",
          type: "TIMESTAMP",
       },
@@ -84,9 +84,12 @@ const SchemaForm = () => {
             columns: filterdColumns,
          });
          toast.success("Schema created successfully");
-      } catch (error) {
+      } catch (error: any) {
          console.error(error);
-         toast.error("Failed to create schema");
+         console.error(error.response.data.message);
+         toast.error(
+            error?.response?.data?.message || "Failed to create schema!"
+         );
       }
    };
 
