@@ -57,6 +57,6 @@ export class SchemaController {
 
   @Get('')
   async findAll() {
-    return 'Hello';
+    return await this.schemaService.find({});
   }
 }
