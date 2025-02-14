@@ -8,6 +8,7 @@ import {
   Delete,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { SchemaService } from './schema.service';
 import {
@@ -26,7 +27,7 @@ export class SchemaController {
     private readonly dynamicSchemaService: DynamicSchemaService,
   ) {}
 
-  @Post('')
+  @Post()
   async createSchema(@Body() dto: CreateDynamicSchemaDto) {
     // Check if schema exist already
     const foundSchema = await this.schemaService.findOne({
@@ -55,8 +56,28 @@ export class SchemaController {
     return schema;
   }
 
-  @Get('')
+  @Get()
   async findAll() {
     return await this.schemaService.find({});
+  }
+
+  @Get('data/:tableName')
+  async getTableData(
+    @Param('tableName') tableName: string,
+    @Query('search') search?: string,
+    @Query('sortColumn') sortColumn?: string,
+    @Query('sortOrder') sortOrder: 'ASC' | 'DESC' = 'ASC',
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    const data = await this.dynamicSchemaService.getTableData(
+      tableName,
+      search,
+      sortColumn,
+      sortOrder,
+      Number(page),
+      Number(limit),
+    );
+    return data;
   }
 }

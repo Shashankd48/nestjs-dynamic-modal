@@ -24,6 +24,8 @@ export class DynamicSchemaService {
         })
         .join(', ');
 
+      console.log('log: columnDefinitions', columnDefinitions);
+
       const query = `CREATE TABLE IF NOT EXISTS ${dto.tableName} (${columnDefinitions});`;
 
       await queryRunner.query(query);
@@ -40,5 +42,30 @@ export class DynamicSchemaService {
         error: true,
       };
     }
+  }
+
+  async getTableData(
+    tableName: string,
+    searchQuery?: string,
+    sortColumn?: string,
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const offset = (page - 1) * limit;
+
+    let query = `SELECT * FROM ${tableName}`;
+
+    if (searchQuery) {
+      query += ` WHERE ${searchQuery}`;
+    }
+
+    if (sortColumn) {
+      query += ` ORDER BY ${sortColumn} ${sortOrder}`;
+    }
+
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
+
+    return await this.dataSource.query(query);
   }
 }
