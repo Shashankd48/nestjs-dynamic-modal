@@ -70,6 +70,25 @@ export class SchemaController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
+    const schema = await this.schemaService.findOne({
+      where: { name: tableName },
+    });
+
+    if (!schema)
+      throw new HttpException('Schema not found', HttpStatus.NOT_FOUND);
+
+    let columns: { key: string; label: string }[] = [];
+    try {
+      const metadata = JSON.parse(schema.metadata);
+
+      if (!metadata || metadata?.length <= 0)
+        throw new HttpException('Schema not found', HttpStatus.NOT_FOUND);
+
+      columns = metadata;
+    } catch (error) {
+      console.error(error);
+    }
+
     const data = await this.dynamicSchemaService.getTableData(
       tableName,
       search,
@@ -78,6 +97,27 @@ export class SchemaController {
       Number(page),
       Number(limit),
     );
-    return data;
+    return { data, columns };
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    const schema = await this.schemaService.findOne({
+      where: { id },
+    });
+
+    if (!schema)
+      throw new HttpException('Table not found', HttpStatus.NOT_FOUND);
+
+    const deleteTable = await this.dynamicSchemaService.deleteTable(
+      schema.name,
+    );
+
+    if (deleteTable.error)
+      throw new HttpException(deleteTable.message, HttpStatus.BAD_REQUEST);
+
+    await this.schemaService.remove(id);
+
+    return deleteTable;
   }
 }

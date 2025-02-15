@@ -1,3 +1,9 @@
+import ListModels from "@/components/data-model/ListModels";
+
 export default function Home() {
-   return <div>Home</div>;
+   return (
+      <div>
+         <ListModels />
+      </div>
+   );
 }

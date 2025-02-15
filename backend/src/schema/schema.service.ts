@@ -24,29 +24,6 @@ export class SchemaService {
     return this.schemaRepository.find(options);
   }
 
-  // async insertMany(createRoleDto: CreateRoleDto[]): Promise<Schema[]> {
-  //   const role = this.schemaRepository.create(createRoleDto);
-  //   return await this.schemaRepository.save(role);
-  // }
-
-  // async findAll(): Promise<Schema[]> {
-  //   return await this.schemaRepository.find();
-  // }
-
-  // async findById(id: string): Promise<Schema | null> {
-  //   const role = await this.schemaRepository.findOne({ where: { id } });
-  //   return role;
-  // }
-
-  // async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Schema> {
-  //   const existingRole = await this.findById(id);
-  //   const updatedRole = {
-  //     ...existingRole,
-  //     ...updateRoleDto,
-  //   };
-  //   return await this.schemaRepository.save(updatedRole);
-  // }
-
   async remove(id: string) {
     return this.schemaRepository.delete({ id });
   }

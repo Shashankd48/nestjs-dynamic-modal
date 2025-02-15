@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
   CreateDynamicSchemaDto,
@@ -9,10 +9,14 @@ import {
 export class DynamicSchemaService {
   constructor(private readonly dataSource: DataSource) {}
 
+  private async getQueryRunner() {
+    const queryRunner = this.dataSource.createQueryRunner();
+    return queryRunner.connect();
+  }
+
   async createTable(dto: CreateDynamicSchemaDto) {
     try {
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
+      const queryRunner = await this.getQueryRunner();
 
       const columnDefinitions = dto.columns
         .map((col) => {
@@ -23,8 +27,6 @@ export class DynamicSchemaService {
           return definition;
         })
         .join(', ');
-
-      console.log('log: columnDefinitions', columnDefinitions);
 
       const query = `CREATE TABLE IF NOT EXISTS ${dto.tableName} (${columnDefinitions});`;
 
@@ -52,20 +54,90 @@ export class DynamicSchemaService {
     page: number = 1,
     limit: number = 10,
   ) {
-    const offset = (page - 1) * limit;
+    try {
+      // Validate table name to allow only letters, numbers, and underscores
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+        throw new Error('Invalid table name');
+      }
 
-    let query = `SELECT * FROM ${tableName}`;
+      // Validate sort column if provided
+      if (sortColumn && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(sortColumn)) {
+        throw new Error('Invalid sort column');
+      }
 
-    if (searchQuery) {
-      query += ` WHERE ${searchQuery}`;
+      // Optional: Sanitize searchQuery further if you plan to allow it as a raw SQL fragment.
+      // For example, reject dangerous keywords or characters.
+      if (
+        searchQuery &&
+        /;|--|\b(drop|delete|insert|update)\b/i.test(searchQuery)
+      ) {
+        throw new Error('Invalid search query');
+      }
+
+      // Calculate offset for pagination
+      const offset = (page - 1) * limit;
+
+      // Build the query using the validated table and column names.
+      // We quote the table and column names to avoid conflicts with reserved keywords.
+      let query = `SELECT * FROM "${tableName}"`;
+
+      if (searchQuery) {
+        // Since searchQuery is provided as a raw fragment, ensure it is safe
+        query += ` WHERE ${searchQuery}`;
+      }
+
+      if (sortColumn) {
+        query += ` ORDER BY "${sortColumn}" ${sortOrder}`;
+      }
+
+      // Parameterize LIMIT and OFFSET to prevent injection
+      query += ` LIMIT $1 OFFSET $2`;
+
+      return await this.dataSource.query(query, [limit, offset]);
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
+  }
 
-    if (sortColumn) {
-      query += ` ORDER BY ${sortColumn} ${sortOrder}`;
+  async deleteTable(tableName: string) {
+    try {
+      // Validate table name to prevent SQL injection
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+        throw new BadRequestException('Invalid table name');
+      }
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+
+      try {
+        // Check if the table exists in PostgreSQL
+        const result = await queryRunner.query(
+          `SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = $1
+          ) AS "exists";`,
+          [tableName],
+        );
+
+        if (!result[0]?.exists) {
+          throw new BadRequestException(`Table "${tableName}" does not exist.`);
+        }
+
+        // Drop the table safely
+        await queryRunner.query(`DROP TABLE "${tableName}" CASCADE`);
+
+        return {
+          message: `Table "${tableName}" deleted successfully.`,
+          error: false,
+        };
+      } finally {
+        await queryRunner.release();
+      }
+    } catch (error) {
+      return {
+        message: error.message,
+        error: true,
+      };
     }
-
-    query += ` LIMIT ${limit} OFFSET ${offset}`;
-
-    return await this.dataSource.query(query);
   }
 }

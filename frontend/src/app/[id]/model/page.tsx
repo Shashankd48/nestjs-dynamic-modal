@@ -1,4 +1,4 @@
-import SchemaForm from "@/components/SchemaForm";
+import SchemaForm from "@/components/data-model/SchemaForm";
 
 const CreateObjectPage = () => {
    return <SchemaForm />;

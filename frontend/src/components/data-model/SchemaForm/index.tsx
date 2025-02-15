@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Button } from "@heroui/react";
 import { APIServer } from "@/libs/apiServer";
 import toast from "react-hot-toast";
 import postgresDataTypes from "@/libs/constants/postgresDataTypes";
+import { useSidebarStore } from "@/libs/store";
 
 type Column = {
    name: string;
@@ -46,6 +47,7 @@ const SchemaForm = () => {
          isNotNull: false,
       },
    ]);
+   const { addDataModels } = useSidebarStore();
 
    const handleColumnChange = <K extends keyof Column>(
       index: number,
@@ -79,11 +81,15 @@ const SchemaForm = () => {
       console.log("log: columns", filterdColumns);
 
       try {
-         await axios.post(`${APIServer}/schema`, {
+         const res = await axios.post(`${APIServer}/schema`, {
             tableName,
             columns: filterdColumns,
          });
+
+         if (!res || !res.data) throw new Error("Failed to create model");
+
          toast.success("Schema created successfully");
+         addDataModels(res.data);
       } catch (error: any) {
          console.error(error);
          console.error(error.response.data.message);
@@ -92,20 +98,6 @@ const SchemaForm = () => {
          );
       }
    };
-
-   useEffect(() => {
-      const test = async () => {
-         try {
-            await axios.get(`${APIServer}/schema`);
-            // toast.success("Schema created successfully");
-         } catch (error) {
-            console.error(error);
-            toast.error("Failed to create schema");
-         }
-      };
-
-      test();
-   }, []);
 
    return (
       <div className="border border-neutral-300 px-3 py-6 flex flex-col gap-y-3 rounded-lg w-fit">
