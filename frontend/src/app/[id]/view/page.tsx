@@ -13,7 +13,6 @@ const ViewModelPage = async ({ params }: Props) => {
    try {
       const res = await axios.get(`${APIServer}/schema/data/${id}?limit=10`);
 
-      console.log(res.data);
       if (!res || !res.data) throw new Error("No data found");
 
       initialData = res.data;
@@ -21,11 +20,7 @@ const ViewModelPage = async ({ params }: Props) => {
       console.error(error);
    }
 
-   return (
-      <div className="flex flex-col gap-y-6">
-         <DataTable {...{ initialData, id }} />
-      </div>
-   );
+   return <DataTable {...{ initialData, id }} />;
 };
 
 export default ViewModelPage;

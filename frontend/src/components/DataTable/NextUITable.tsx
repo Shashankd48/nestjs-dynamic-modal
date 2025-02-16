@@ -20,13 +20,14 @@ type Props = {
    id: string;
    moreOptions: {
       onDelete: (rowId: string) => Promise<void>;
+      onEdit: (values: any) => void;
    };
 };
 
 export default function NextUITable({
    initialData: { data, columns: metadata },
    id,
-   moreOptions: { onDelete },
+   moreOptions: { onDelete, onEdit },
 }: Props) {
    // Preserve case-sensitive column keys
    const columns = useMemo(() => {
@@ -94,7 +95,11 @@ export default function NextUITable({
                                  </DropdownTrigger>
                                  <DropdownMenu>
                                     <DropdownItem key="view">View</DropdownItem>
-                                    <DropdownItem key="edit" color="primary">
+                                    <DropdownItem
+                                       key="edit"
+                                       color="primary"
+                                       onPress={() => onEdit(item)}
+                                    >
                                        Edit
                                     </DropdownItem>
                                     <DropdownItem

@@ -20,6 +20,50 @@ export class DynamicSchemaService {
     return queryRunner.connect();
   }
 
+  // async createTable(dto: CreateDynamicSchemaDto) {
+  //   try {
+  //     const queryRunner = await this.getQueryRunner();
+
+  //     // Define default system columns (id, createdAt, updatedAt)
+  //     const systemColumns = [
+  //       `"id" UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
+  //       `"createdAt" TIMESTAMP DEFAULT NOW()`,
+  //       `"updatedAt" TIMESTAMP DEFAULT NOW()`,
+  //     ];
+
+  //     // Generate column definitions from DTO while preserving case sensitivity
+  //     const columnDefinitions = dto.columns.map((col) => {
+  //       let definition = `"${col.name}" ${col.type}`; // Preserve case sensitivity
+
+  //       if (col.isPrimaryKey) definition += ' PRIMARY KEY';
+  //       if (col.isUnique) definition += ' UNIQUE';
+  //       if (col.isNotNull) definition += ' NOT NULL';
+
+  //       return definition;
+  //     });
+
+  //     // Combine system columns with user-defined columns
+  //     const allColumns = [...systemColumns, ...columnDefinitions].join(', ');
+
+  //     // Final SQL query
+  //     const query = `CREATE TABLE IF NOT EXISTS "${dto.tableName}" (${allColumns});`;
+
+  //     await queryRunner.query(query);
+  //     await queryRunner.release();
+
+  //     return {
+  //       message: `Table "${dto.tableName}" created successfully.`,
+  //       error: false,
+  //     };
+  //   } catch (error: any) {
+  //     console.error(error);
+  //     return {
+  //       message: error.message,
+  //       error: true,
+  //     };
+  //   }
+  // }
+
   async createTable(dto: CreateDynamicSchemaDto) {
     try {
       const queryRunner = await this.getQueryRunner();
@@ -28,7 +72,7 @@ export class DynamicSchemaService {
       const systemColumns = [
         `"id" UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
         `"createdAt" TIMESTAMP DEFAULT NOW()`,
-        `"updatedAt" TIMESTAMP DEFAULT NOW()`,
+        `"updatedAt" TIMESTAMP NULL`, // Initially NULL
       ];
 
       // Generate column definitions from DTO while preserving case sensitivity
@@ -45,14 +89,39 @@ export class DynamicSchemaService {
       // Combine system columns with user-defined columns
       const allColumns = [...systemColumns, ...columnDefinitions].join(', ');
 
-      // Final SQL query
-      const query = `CREATE TABLE IF NOT EXISTS "${dto.tableName}" (${allColumns});`;
+      // Final SQL query for table creation
+      const createTableQuery = `CREATE TABLE IF NOT EXISTS "${dto.tableName}" (${allColumns});`;
 
-      await queryRunner.query(query);
+      // Execute table creation
+      await queryRunner.query(createTableQuery);
+
+      // Create trigger function for automatic `updatedAt` update
+      const triggerFunctionQuery = `
+            CREATE OR REPLACE FUNCTION update_updated_at_column()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW."updatedAt" = NOW();
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        `;
+
+      // Create trigger to update `updatedAt` on row update
+      const triggerQuery = `
+            CREATE TRIGGER set_updated_at
+            BEFORE UPDATE ON "${dto.tableName}"
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+        `;
+
+      // Execute trigger function and trigger
+      await queryRunner.query(triggerFunctionQuery);
+      await queryRunner.query(triggerQuery);
+
       await queryRunner.release();
 
       return {
-        message: `Table "${dto.tableName}" created successfully.`,
+        message: `Table "${dto.tableName}" created successfully with automatic updatedAt updates.`,
         error: false,
       };
     } catch (error: any) {
@@ -183,12 +252,32 @@ export class DynamicSchemaService {
   }
 
   async updateData(tableName: string, id: string, data: Record<string, any>) {
-    return await this.dataSource
-      .createQueryBuilder()
-      .update(tableName)
-      .set(data)
-      .where('id = :id', { id })
-      .execute();
+    try {
+      const result = await this.dataSource
+        .createQueryBuilder()
+        .update(tableName)
+        .set(data)
+        .where('id = :id', { id })
+        .returning('*') // Return all updated columns
+        .execute();
+
+      if (result.raw.length === 0) {
+        return {
+          error: 'Record not found or no changes made',
+          data: null,
+        };
+      }
+
+      return {
+        error: '',
+        data: result.raw[0], // Return updated record
+      };
+    } catch (error) {
+      return {
+        error: error.message,
+        data: null,
+      };
+    }
   }
 
   async deleteData(tableName: string, id: string): Promise<any> {

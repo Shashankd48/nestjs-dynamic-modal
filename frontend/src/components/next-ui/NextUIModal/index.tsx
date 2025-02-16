@@ -68,26 +68,6 @@ const NextUIModal = ({
             onOpenChange();
             handleClose();
          }}
-         motionProps={{
-            variants: {
-               enter: {
-                  y: 0,
-                  opacity: 1,
-                  transition: {
-                     duration: 0.3,
-                     ease: "easeOut",
-                  },
-               },
-               exit: {
-                  y: -20,
-                  opacity: 0,
-                  transition: {
-                     duration: 0.2,
-                     ease: "easeIn",
-                  },
-               },
-            },
-         }}
          size={size}
          classNames={{
             closeButton:
@@ -99,7 +79,7 @@ const NextUIModal = ({
          <ModalContent>
             {() => (
                <>
-                  <ModalHeader className="flex flex-col px-6 py-4 bg-indigo-950 text-white">
+                  <ModalHeader className="bg-black text-white">
                      <h2 className="text-xl font-semibold mb-1">{title}</h2>
                      {subtitle && (
                         <p className="text-sm text-white">{subtitle}</p>

@@ -222,14 +222,15 @@ export class SchemaController {
     if (!schema)
       throw new HttpException('Schema not found', HttpStatus.NOT_FOUND);
 
-    let columns: { name: string; label: string }[] = [];
+    let columns: { name: string }[] = [];
     try {
       columns = JSON.parse(schema.metadata);
-      if (!columns || columns.length === 0)
+      if (!columns || columns.length === 0) {
         throw new HttpException(
           'Schema metadata is invalid',
           HttpStatus.BAD_REQUEST,
         );
+      }
     } catch (error) {
       throw new HttpException(
         'Schema metadata is invalid',
@@ -258,7 +259,12 @@ export class SchemaController {
       id,
       filteredData,
     );
-    return { message: 'Record updated successfully', result };
+
+    if (result.error !== '') throw new BadRequestException(result.error);
+
+    if (!result.data) throw new BadRequestException('Failed to update record');
+
+    return result.data; // Ensure the same return type as insertData
   }
 
   @Delete('data/:tableName/:id')
