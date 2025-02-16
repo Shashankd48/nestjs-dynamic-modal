@@ -23,8 +23,6 @@ const ViewModelPage = async ({ params }: Props) => {
 
    return (
       <div className="flex flex-col gap-y-6">
-         <h1 className="uppercase text-xl font-semibold">{id}</h1>
-
          <DataTable {...{ initialData, id }} />
       </div>
    );

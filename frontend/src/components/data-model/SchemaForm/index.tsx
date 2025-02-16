@@ -7,38 +7,30 @@ import toast from "react-hot-toast";
 import postgresDataTypes from "@/libs/constants/postgresDataTypes";
 import { useSidebarStore } from "@/libs/store";
 
-type Column = {
-   name: string;
-   type: string;
-   isPrimaryKey: boolean;
-   isUnique: boolean;
-   isNotNull: boolean;
-};
-
 const SchemaForm = () => {
    const [tableName, setTableName] = useState("");
    const [columns, setColumns] = useState<Column[]>([
-      {
-         isNotNull: false,
-         isPrimaryKey: true,
-         isUnique: true,
-         name: "id",
-         type: "UUID",
-      },
-      {
-         isNotNull: false,
-         isPrimaryKey: false,
-         isUnique: false,
-         name: "createdAt",
-         type: "TIMESTAMP",
-      },
-      {
-         isNotNull: false,
-         isPrimaryKey: false,
-         isUnique: false,
-         name: "updatedAt",
-         type: "TIMESTAMP",
-      },
+      // {
+      //    isNotNull: false,
+      //    isPrimaryKey: true,
+      //    isUnique: true,
+      //    name: "id",
+      //    type: "UUID",
+      // },
+      // {
+      //    isNotNull: false,
+      //    isPrimaryKey: false,
+      //    isUnique: false,
+      //    name: "createdAt",
+      //    type: "TIMESTAMP",
+      // },
+      // {
+      //    isNotNull: false,
+      //    isPrimaryKey: false,
+      //    isUnique: false,
+      //    name: "updatedAt",
+      //    type: "TIMESTAMP",
+      // },
       {
          name: "",
          type: "VARCHAR",
