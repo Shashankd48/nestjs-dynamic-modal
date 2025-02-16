@@ -16,6 +16,7 @@ const ViewModelPage = async ({ params }: Props) => {
       if (!res || !res.data) throw new Error("No data found");
 
       initialData = res.data;
+      console.log(initialData);
    } catch (error) {
       console.error(error);
    }

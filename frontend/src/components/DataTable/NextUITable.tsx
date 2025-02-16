@@ -41,6 +41,31 @@ export default function NextUITable({
    }, [metadata]);
 
    // Dynamically render table cell content
+   //    const renderCell = useCallback(
+   //       (item: any, columnKey: string) => {
+   //          const columnMeta = metadata.find((col) => col.name === columnKey);
+   //          if (!columnMeta) return item[columnKey] || "-"; // Default value
+
+   //          const cellValue = item[columnKey];
+
+   //          // Handle different data types
+   //          if (!cellValue) return "-"; // Fallback for null/undefined
+
+   //          switch (columnMeta.type.toUpperCase()) {
+   //             case "UUID":
+   //                return cellValue.split("-")[0];
+
+   //             case "TIMESTAMP":
+   //             case "DATE":
+   //                return moment(cellValue).format("DD/MM/YY");
+
+   //             default:
+   //                return cellValue;
+   //          }
+   //       },
+   //       [metadata]
+   //    );
+
    const renderCell = useCallback(
       (item: any, columnKey: string) => {
          const columnMeta = metadata.find((col) => col.name === columnKey);
@@ -49,7 +74,7 @@ export default function NextUITable({
          const cellValue = item[columnKey];
 
          // Handle different data types
-         if (!cellValue) return "-"; // Fallback for null/undefined
+         if (cellValue === null || cellValue === undefined) return "-"; // Fallback for null/undefined
 
          switch (columnMeta.type.toUpperCase()) {
             case "UUID":
@@ -57,7 +82,28 @@ export default function NextUITable({
 
             case "TIMESTAMP":
             case "DATE":
-               return moment(cellValue).format("DD/MM/YY");
+            case "TIMESTAMPTZ":
+               return moment(cellValue).format("DD/MM/YY HH:mm");
+
+            case "BOOLEAN":
+               return cellValue ? "✔️ Yes" : "❌ No";
+
+            case "JSON":
+            case "JSONB":
+               return (
+                  <pre className="whitespace-pre-wrap text-xs">
+                     {JSON.stringify(cellValue, null, 2)}
+                  </pre>
+               );
+
+            case "ARRAY":
+               return Array.isArray(cellValue) ? cellValue.join(", ") : "-";
+
+            case "MONEY":
+               return new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+               }).format(cellValue);
 
             default:
                return cellValue;

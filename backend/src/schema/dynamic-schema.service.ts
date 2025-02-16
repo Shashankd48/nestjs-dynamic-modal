@@ -20,50 +20,6 @@ export class DynamicSchemaService {
     return queryRunner.connect();
   }
 
-  // async createTable(dto: CreateDynamicSchemaDto) {
-  //   try {
-  //     const queryRunner = await this.getQueryRunner();
-
-  //     // Define default system columns (id, createdAt, updatedAt)
-  //     const systemColumns = [
-  //       `"id" UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-  //       `"createdAt" TIMESTAMP DEFAULT NOW()`,
-  //       `"updatedAt" TIMESTAMP DEFAULT NOW()`,
-  //     ];
-
-  //     // Generate column definitions from DTO while preserving case sensitivity
-  //     const columnDefinitions = dto.columns.map((col) => {
-  //       let definition = `"${col.name}" ${col.type}`; // Preserve case sensitivity
-
-  //       if (col.isPrimaryKey) definition += ' PRIMARY KEY';
-  //       if (col.isUnique) definition += ' UNIQUE';
-  //       if (col.isNotNull) definition += ' NOT NULL';
-
-  //       return definition;
-  //     });
-
-  //     // Combine system columns with user-defined columns
-  //     const allColumns = [...systemColumns, ...columnDefinitions].join(', ');
-
-  //     // Final SQL query
-  //     const query = `CREATE TABLE IF NOT EXISTS "${dto.tableName}" (${allColumns});`;
-
-  //     await queryRunner.query(query);
-  //     await queryRunner.release();
-
-  //     return {
-  //       message: `Table "${dto.tableName}" created successfully.`,
-  //       error: false,
-  //     };
-  //   } catch (error: any) {
-  //     console.error(error);
-  //     return {
-  //       message: error.message,
-  //       error: true,
-  //     };
-  //   }
-  // }
-
   async createTable(dto: CreateDynamicSchemaDto) {
     try {
       const queryRunner = await this.getQueryRunner();
@@ -83,6 +39,12 @@ export class DynamicSchemaService {
         if (col.isUnique) definition += ' UNIQUE';
         if (col.isNotNull) definition += ' NOT NULL';
 
+        if (col.type === 'ARRAY') {
+          // Assume the column definition includes a base type, e.g., 'TEXT' or 'INTEGER'
+          // definition = `"${col.name}" ${col.baseType}[]`;
+          definition = `"${col.name}" TEXT[]`;
+        }
+
         return definition;
       });
 
@@ -91,6 +53,8 @@ export class DynamicSchemaService {
 
       // Final SQL query for table creation
       const createTableQuery = `CREATE TABLE IF NOT EXISTS "${dto.tableName}" (${allColumns});`;
+
+      console.log(createTableQuery);
 
       // Execute table creation
       await queryRunner.query(createTableQuery);
